@@ -3,13 +3,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler {
-    protected Vector2 AxisValue { private set; get; }
-    public Vector2 pAxisValue => AxisValue;
+    protected Vector2 axisValue { private set; get; }
+    public Vector2 pAxisValue => axisValue;
+    // public Vector2 _AxisValue { set => this.AxisValue = value; }
     public void SetAxisValue (Vector2 v) {
-        AxisValue = v;
+        axisValue = v;
     }
-    protected float DragDistance { private set; get; }
-    protected float _DragDistance { set => this.DragDistance = value; }
+    protected float DragDistance;
+
     protected Vector2 startPoint;
 
     public bool isStartDragingEnabled = false; // 等价于 按下
@@ -31,7 +32,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
     [SerializeField] float dragMinLength = 10;
     float dragSpeedFaction = 1f;
     protected void SetDragSpeedFaction (float sf) {
-        // LLog.Error($"TEMP SetDragSpeedFaction dragSpeedFaction:{sf}");
+        // LLog.Error ($"TEMP SetDragSpeedFaction dragSpeedFaction:{sf}");
         dragSpeedFaction = sf;
     }
 
@@ -61,14 +62,20 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
         var dir = vec.normalized;
         DragDistance = vec.magnitude;
 
+        // if (DragDistance < dragMinLength) {
+        //     Debug.Log ($"DragDistance < dragMinLength");
+        //     isDraging = false;
+        //     return;
+        // }
+
         if (DragDistance > dragMaxLength) DragDistance = dragMaxLength;
-        AxisValue = dir * (DragDistance / dragMaxLength) * dragSpeedFaction;
+        axisValue = dir * (DragDistance / dragMaxLength) * dragSpeedFaction;
         isDraging = true;
         OnDraging ();
     }
 
     public void OnPointerDown (PointerEventData eventData) {
-        // Debug.Log("OnPointerDown");
+        // Debug.LogError("OnPointerDown");
         // Log.Trace ("input", $"RightJoystick OnPointerDown() isStartDraging:{isStartDraging}");
         if (!isWork) {
             Debug.Log ($"HiJoystick OnPointerDown() isWork false, touchCount:{touchCount}, isDraging:{isDraging}");
@@ -91,7 +98,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
 #endif
 
         if (!DownCount ()) {
-            Debug.Log ($"HiJoystick OnPointerDown() isWork true, touchCount:{touchCount}, isStartDraging:{isStartDragingEnabled}");
+            // Debug.Log ($"HiJoystick OnPointerDown() isWork true, touchCount:{touchCount}, isStartDraging:{isStartDragingEnabled}");
             return;
         }
 
@@ -103,9 +110,13 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
 
     // 当短暂脱手，视为不脱手
     protected bool isSimulatePressed = false;
+
     // 当短暂脱手，视为不脱手 -------------------------------- begin
-    readonly float RemainPresssimulateTime = 0.15f;
+    float remainPresssimulateTime = 0.1f;
     float timerSimulate;
+    public void Set_RemainPresssimulateTime (float t) {
+        remainPresssimulateTime = t;
+    }
     void Update () {
         if (isSimulatePressed) {
             timerSimulate -= Time.deltaTime;
@@ -133,7 +144,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
         if (!isSimulatePressed) {
             isSimulatePressed = true;
             // touchCount--;
-            timerSimulate = RemainPresssimulateTime;
+            timerSimulate = remainPresssimulateTime;
         }
     }
     void Real_OnPointerUp () {
@@ -145,7 +156,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
         isStartDragingEnabled = false;
         // isDraging = false;
         Set_IsDraging_False ();
-        AxisValue = Vector2.zero;
+        axisValue = Vector2.zero;
         DragDistance = 0;
         OnEndDrag ();
     }
@@ -159,7 +170,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
         isStartDragingEnabled = false;
         // isDraging = false;
         Set_IsDraging_False ();
-        AxisValue = Vector2.zero;
+        axisValue = Vector2.zero;
         DragDistance = 0;
         OnEndDrag ();
     }
@@ -173,7 +184,7 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
         // isStartDragingEnabled = false;
         // isDraging = false;
         Set_IsDraging_False ();
-        AxisValue = Vector2.zero;
+        axisValue = Vector2.zero;
         DragDistance = 0;
         // OnEndDrag ();
     }
@@ -207,8 +218,8 @@ public abstract class HiJoystick : MonoBehaviour, IDragHandler, IPointerDownHand
     }
 
     public void ResetTouchCount () {
-        // Debug.Log("ResetTouchCount");
-        // Debug.Log($"isWork:{isWork}");
+        // Debug.LogError("ResetTouchCount");
+        // Debug.LogError($"isWork:{isWork}");
         touchCount = 0;
         isStartDragingEnabled = false;
 

@@ -61,19 +61,11 @@ public class ScreenJoystick : HiJoystick {
     }
 
     RectTransform rtLeft;
-
-    float input_dir_area_width = 0.4f;
-    float input_dir_area_height = 0.7f;
-
-    // 当前的Canvas
-    Canvas curCanvas;
-
-    void Start () {
-        curCanvas = FindObjectOfType<Canvas>();
-
+    public void SetInit2 () {
         if (noActivePart != null) {
             noActivePart.transform.localScale = Vector3.zero;
             noActivePart.SetActive (true);
+            // Debug.LogError("ScreenJoystick 1");
             noActivePart.transform.DOScale (Vector3.one, appearTimer).SetEase (appearEase).SetUpdate (true).SetTarget (this);
         }
         arrowRotateTransform.gameObject.SetActive (false);
@@ -91,15 +83,19 @@ public class ScreenJoystick : HiJoystick {
         // rtLeft.offsetMax = new Vector2(0, 0);      // right, top
 
         // 只需要和cannas的标准比较：高度 占屏幕 1080*2/3 = 720  宽度 占屏幕2160*1/2 = 1080
-        var canvasSize = curCanvas.GetComponent<RectTransform> ().sizeDelta;
-        // Debug.LogError($"Screen.width:{Screen.width}, Screen.height:{Screen.height}, canvasSize:{canvasSize}");
-        rtLeft.sizeDelta = new Vector2 (canvasSize.x * input_dir_area_width, canvasSize.y * input_dir_area_height);
-        // rtLeft.sizeDelta = new Vector2 (2160 * input_dir_area_width, 1080 * input_dir_area_height);
+        rtLeft.sizeDelta = sizeDelta;
 
 #if UNITY_EDITOR
         Debug.Log ($"[Editor临时] ScreenJoystick rtLeft.sizeDelta:{rtLeft.sizeDelta}");
 #endif
         // 响应区域 --------------------------------------------------- end
+    }
+
+    Canvas curCanvas;
+    Vector2 sizeDelta;
+    public void SetInit (Canvas c, Vector2 sizeDelta) {
+        curCanvas = c;
+        this.sizeDelta = sizeDelta;
     }
 
     uint offset_left = 4;
@@ -115,8 +111,8 @@ public class ScreenJoystick : HiJoystick {
     }
 
     protected override void OnDraging () {
-        thumb.localPosition = AxisValue * DragDistance;
-        float angle = Vector2.SignedAngle (Vector2.right, AxisValue);
+        thumb.localPosition = axisValue * DragDistance;
+        float angle = Vector2.SignedAngle (Vector2.right, axisValue);
         angle %= 360;
         if (rotatePart == null) { rotatePart = arrowRotateTransform; }
         rotatePart.rotation = Quaternion.Euler (0, 0, angle);
@@ -155,7 +151,7 @@ public class ScreenJoystick : HiJoystick {
     }
     void SetAutoDrag (Vector2 AxisValue, float DragDistance) {
         SetAxisValue (AxisValue);
-        this._DragDistance = DragDistance;
+        this.DragDistance = DragDistance;
         thumb.localPosition = AxisValue * DragDistance;
         float angle = Vector2.SignedAngle (Vector2.right, AxisValue);
         angle %= 360;
